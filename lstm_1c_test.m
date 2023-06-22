@@ -3,16 +3,15 @@ clc;
 clear all;
 close all;
 %}
-raw = readtable('Data_m.xlsx', 'Sheet','Sheet1', 'VariableNamingRule','preserve');
+raw = readtable('Historical_Data.xlsx', 'Sheet','Sheet1', 'VariableNamingRule','preserve');
 times = raw(:,1).Variables;
 times = rmmissing(times);
 data = raw(:,2:4).Variables;
-data = str2double(rmmissing(data));
 data = data';
 
 % Creating the datetime array
 startTime = datetime('2021-10-01 00:00:00');
-endTime = datetime('2022-10-11 23:45:00');
+endTime = datetime('2023-06-16 23:45:00');
 timeData = startTime:minutes(15):endTime;
 timeData = timeData';
 
@@ -38,11 +37,23 @@ sigX = std(dataTrain(:,1:end-1),0,2);
 muY = mean(dataTrain(colOutput,2:end),2);
 sigY = std(dataTrain(colOutput,2:end),0,2);
 
+%%% normalization of training set
+
+XTrain = (dataTrain(:,1:end-1)-muX)./sigX;
+YTrain = (dataTrain(colOutput,2:end)-muY)./sigY;
+
 
 YtimeDataTest = timeDataTest(2:end,:);
 
 timesTest = times(numTimeStepsTrain+1:end,:);
 
+%{
+%%% mean and std of training dataset
+muX = mean(dataTest(:,1:end-1),2);
+sigX = std(dataTest(:,1:end-1),0,2);
+muY = mean(dataTest(colOutput,1:end),2);
+sigY = std(dataTest(colOutput,1:end),0,2);
+%}
 
 %%% normalization of testing set
 XTest = (dataTest(:,1:end-1)-muX)./sigX;
@@ -93,6 +104,7 @@ for i = 2:numTimestepsTest
         act_change_array = [act_change_array; "Decrease"];
     end
 end
+
 rmse = sqrt(mean((YOpenPred-TUnstandardized).^2));
 
 % Visualization of the predictions with the Test data
@@ -109,14 +121,13 @@ legend(["Observed" "Foreccasted"]);
 
 % Confusion Matrix 
 figure(3);
-%plotconfusion(TUnstandardized,YOpenPred);
 cm = confusionchart(act_change_array,pred_change_array);
 cm.ColumnSummary = 'column-normalized';
 cm.RowSummary = 'row-normalized';
 cm.Title = 'Confusion Matrix';
 
-
 %{
+
 % Visualizing the predictions
 net = resetState(net);
 hist = 10;
@@ -132,4 +143,5 @@ for i=hist:size(XTest,2)
     hold off;
     pause(0.5);
 end
+
 %}
