@@ -1,20 +1,19 @@
-clc;
-clear all;
-close all;
+
 raw = readtable('Data_oct21-jun23.xlsx', 'Sheet','Sheet1', 'VariableNamingRule','preserve');
 times = raw(:,1).Variables;
 times = rmmissing(times);
 data = raw(:,2:4).Variables;
+%data = str2double(rmmissing(data));
 data = data';
 
-
+%{
 % Creating the datetime array
 startTime = datetime('2021-10-01 00:00:00');
 endTime = datetime('2022-10-11 23:45:00');
 timeData = startTime:minutes(15):endTime;
 timeData = timeData';
 
-% Visualizing the Data
+
 figure;
 subplot(3, 1, 1)
 plot(timeData(:,1),data(1,:));
@@ -44,7 +43,7 @@ numChannels = size(data,1);
 numTimeStepsTrain = floor(0.8*size(data,2));
 dataTrain = data(:,1:numTimeStepsTrain);
 dataTest = data(:,numTimeStepsTrain+1:end);
-timeDataTest = timeData(numTimeStepsTrain+1:end,:);
+%timeDataTest = timeData(numTimeStepsTrain+1:end,:);
 
 %%% mean and std of training dataset
 muX = mean(dataTrain(:,1:end-1),2);
@@ -53,6 +52,7 @@ muY = mean(dataTrain(colOutput,2:end),2);
 sigY = std(dataTrain(colOutput,2:end),0,2);
 
 %%% normalization of training set
+
 XTrain = (dataTrain(:,1:end-1)-muX)./sigX;
 YTrain = (dataTrain(colOutput,2:end)-muY)./sigY;                             
 
@@ -73,6 +73,6 @@ options = trainingOptions("adam",...
     Verbose=1);
 
 %%% training
-net = trainNetwork(XTrain,YTrain,layers,options);
+net_15 = trainNetwork(XTrain,YTrain,layers,options);
 
-save("lstm_1c_256_0.005_nnet.mat", "net");
+save("lstm_15-min_nnet.mat", "net_15");

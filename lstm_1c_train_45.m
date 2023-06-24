@@ -1,7 +1,7 @@
 clc;
 clear all;
 close all;
-raw = readtable('Historical_Data.xlsx', 'Sheet','Sheet1', 'VariableNamingRule','preserve');
+raw = readtable('Data_oct21-jun23.xlsx', 'Sheet','Sheet1', 'VariableNamingRule','preserve');
 times = raw(:,1).Variables;
 times = rmmissing(times);
 data = raw(:,2:4).Variables;
@@ -15,7 +15,7 @@ endTime = datetime('2023-06-16 23:45:00');
 timeData = startTime:minutes(15):endTime;
 timeData = timeData';
 
-
+%{
 figure;
 subplot(3, 1, 1)
 plot(data(1,:));
@@ -34,7 +34,7 @@ plot(timeData(:,1),data(3,:), 'color', 'green');
 xlabel("Time Stamp")
 ylabel("Actual Generation")
 title("Actual Generation Data")
-
+%}
 
 
 numInput = 3;
@@ -75,6 +75,6 @@ options = trainingOptions("adam",...
     Verbose=1);
 
 %%% training
-net = trainNetwork(XTrain,YTrain,layers,options);
+net_45 = trainNetwork(XTrain,YTrain,layers,options);
 
-save("lstm_45-min_nnet.mat", "net");
+save("lstm_45-min_nnet.mat", "net_45");

@@ -33,12 +33,15 @@ timeDataTest = timeData(numTimeStepsTrain+1:end,:);
 
 
 %%% mean and std of training dataset
-muX = mean(dataTrain(:,1:end-3),2);
-sigX = std(dataTrain(:,1:end-3),0,2);
-muY = mean(dataTrain(colOutput,4:end),2);
-sigY = std(dataTrain(colOutput,4:end),0,2);
+muX_45 = mean(dataTrain(:,1:end-3),2);
+sigmaX_45 = std(dataTrain(:,1:end-3),0,2);
+muY_45 = mean(dataTrain(colOutput,4:end),2);
+sigmaY_45 = std(dataTrain(colOutput,4:end),0,2);
+
+save("variables_45.mat","muX_45","sigmaX_45","muY_45","sigmaY_45");
 
 %%% normalization of training set
+
 
 XTrain = (dataTrain(:,1:end-3)-muX)./sigX;
 YTrain = (dataTrain(colOutput,4:end)-muY)./sigY;
@@ -48,7 +51,13 @@ YtimeDataTest = timeDataTest(4:end,:);
 
 timesTest = times(numTimeStepsTrain+1:end,:);
 
-
+%{
+%%% mean and std of training dataset
+muX = mean(dataTest(:,1:end-1),2);
+sigX = std(dataTest(:,1:end-1),0,2);
+muY = mean(dataTest(colOutput,1:end),2);
+sigY = std(dataTest(colOutput,1:end),0,2);
+%}
 
 %%% normalization of testing set
 XTest = (dataTest(:,1:end-3)-muX)./sigX;
@@ -57,16 +66,29 @@ YTest = (dataTest(colOutput,4:end)-muY)./sigY;
 % loading the network model
 load lstm_45-min_nnet.mat
 
+%{
+net = resetState(net);
 
+net = predictAndUpdateState(net, XTrain, 'SequencePaddingDirection', 'left');
+
+
+YPred = predict(net, XTest, 'SequencePaddingDirection', 'left');
+
+hold on;
+plot(sigY*YPred+muY, 'r');
+plot(sigY*YTest+muY, 'b');
+legend('Predicted','Actual');
+title('Prediction of Load');
+hold off;
+%}
 
 
 numTimestepsTest = size(XTest,2);
 YOpenPred = [];
 deviation = [];
 
-% Making Predicitons from Model
 for i = 1:numTimestepsTest
-    [net, YOpenPred(i)] = predictAndUpdateState(net, XTest(:,i));
+    [net_45, YOpenPred(i)] = predictAndUpdateState(net_45, XTest(:,i));
     
     deviation(i) = sigY*(YOpenPred(i)-XTest(2,i));
 
@@ -82,7 +104,6 @@ end
 YOpenPred = sigY.*YOpenPred + muY;
 TUnstandardized = sigY.*YTest + muY;
 
-% Initializing Confusion Matrix variables
 for i = 2:numTimestepsTest
 
     if ((YOpenPred(i)-TUnstandardized(i-1))>-20)&&((YOpenPred(i)-TUnstandardized(i-1))<20)
@@ -102,9 +123,9 @@ for i = 2:numTimestepsTest
     end
 end
 
-rmse = sqrt(mean((YOpenPred-TUnstandardized).^2));
+rmse = sqrt(mean((YOpenPred-TUnstandardized).^2))
 
-% Plotting Predictions with Testing Data
+
 figure(1);
 set(gcf, 'Name', 'Scheduled Power Generation Prediction');
 plot(YtimeDataTest, TUnstandardized);
@@ -116,7 +137,7 @@ ylabel("Scheduled Generation");
 title("Scheduled Generation in MW");
 legend(["Observed" "Foreccasted"]);
 
-% Plotting Confusion Matrix
+
 figure(3);
 %plotconfusion(TUnstandardized,YOpenPred);
 cm = confusionchart(act_change_array,pred_change_array);
